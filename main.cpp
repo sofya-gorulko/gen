@@ -8,20 +8,21 @@ struct gen_reading {
     std::string gen;
     std::string quality;
     int length;
-    gen_reading(const std::string& head1, std::string gen, std::string quality) {
+
+    gen_reading(const std::string &head1, std::string gen, std::string quality) {
         this->gen = std::move(gen);
         this->quality = std::move(quality);
         length = std::stoi(head1.substr(head1.find('=') + 1));
     }
 
     void trimming(int pos) {
-        gen = gen.substr(pos);
-        quality = quality.substr(0,pos);
+        gen = gen.substr(0, pos);
+        quality = quality.substr(0, pos);
         length = gen.size();
     }
 };
 
-std::vector<gen_reading> reader(const std::string& file_name) {
+std::vector<gen_reading> reader(const std::string &file_name) {
     std::ifstream file(file_name);
     if (!file.is_open()) {
         std::cout << "Cannot open file." << std::endl;
@@ -39,12 +40,12 @@ std::vector<gen_reading> reader(const std::string& file_name) {
     return gens;
 }
 
-void print_stats(const std::vector<gen_reading>& gens) {
+void print_stats(const std::vector<gen_reading> &gens) {
     int max = 0;
     long long cnt = 0;
     long long sum = 0;
     int min = 1e7;
-    for (auto & gen : gens) {
+    for (auto &gen: gens) {
         max = std::max(max, gen.length);
         cnt++;
         sum += gen.length;
@@ -56,22 +57,22 @@ void print_stats(const std::vector<gen_reading>& gens) {
     std::cout << "average length: " << sum / cnt << std::endl;
 }
 
-double gc_stat(const std::vector<gen_reading>& gens) {
+double gc_stat(const std::vector<gen_reading> &gens) {
     long long count = 0;
     long long sum = 0;
-    for (auto & gen : gens) {
+    for (auto &gen: gens) {
         sum += gen.length;
         count += std::ranges::count(gen.gen, 'C') +
-            std::ranges::count(gen.gen, 'G');
+                std::ranges::count(gen.gen, 'G');
     }
     std::cout << "GC-content: " << count * 100. / sum << std::endl;
     return count * 100. / sum;
 }
 
-double average_quality_at_position(const std::vector<gen_reading>& gens, int pos) {
+double average_quality_at_position(const std::vector<gen_reading> &gens, int pos) {
     long long cnt = 0;
     long long sum = 0;
-    for (auto & gen : gens) {
+    for (auto &gen: gens) {
         sum += gen.quality[pos] - 33;
         cnt++;
     }
@@ -79,10 +80,10 @@ double average_quality_at_position(const std::vector<gen_reading>& gens, int pos
     return sum * 1. / cnt;
 }
 
-std::vector<gen_reading> trimming(const std::vector<gen_reading>& gens, int len, int q) {
+std::vector<gen_reading> trimming(const std::vector<gen_reading> &gens, int len, int q) {
     std::vector<gen_reading> res;
     int over_quality = len * q;
-    for (auto gen : gens) {
+    for (auto gen: gens) {
         if (gen.length < len)
             continue;
         long long sum = 0;
@@ -90,32 +91,34 @@ std::vector<gen_reading> trimming(const std::vector<gen_reading>& gens, int len,
         for (int i = 0; i < len; i++) {
             sum += gen.quality[i] - 33;
         }
-        if (sum < over_quality) {
+        if (sum <= over_quality) {
             continue;
         }
-        for (int i = 0; i < gen.length; i++) {
+        for (int i = len; i < gen.length; i++) {
             sum += gen.quality[i] - gen.quality[i - len];
             if (sum <= over_quality) {
                 last = i;
+                while (gen.quality[last - 1] - 33 < q && last > 1) {
+                    last--;
+                }
+                if (last != gen.length) {
+                    gen.trimming(last);
+                }
                 break;
             }
         }
-
-        int i = last;
-
-        int lastBaseQuality = gen.quality[i - 1] - 33;
-        while (lastBaseQuality < q && i > 1) {
-            i--;
-            lastBaseQuality = gen.quality[i - 1] - 33;
-        }
-
-        if (i != 0) {
-            if (i != gen.length) {
-                // std::cout << i << ' ';
-                gen.trimming(i);
-            }
+        if (last != 0) {
             res.push_back(gen);
         }
+    }
+    return res;
+}
+
+std::vector<gen_reading> trimming(const std::vector<gen_reading> &gens, int len) {
+    std::vector<gen_reading> res;
+    for (auto &gen: gens) {
+        if (gen.length >= len)
+            res.push_back(gen);
     }
     return res;
 }
@@ -129,7 +132,7 @@ int main() {
     std::cout << std::endl;
     std::cout << "cut off readings: " << gens.size() - trim1.size() << std::endl;
     print_stats(trim1);
-    // auto trim2 = trimming(gens, 60, 30);
-    // std::cout << "size: " << trim2.size() << std::endl;
+    auto trim2 = trimming(trim1, 60);
+    std::cout << "size after trimming: " << trim2.size() << std::endl;
     return 0;
 }
