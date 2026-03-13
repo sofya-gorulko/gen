@@ -5,6 +5,9 @@
 #include <vector>
 
 struct gen_reading {
+    /**
+     Struct for saving one reading of gen.
+     */
     std::string gen;
     std::string quality;
     int length;
@@ -23,6 +26,9 @@ struct gen_reading {
 };
 
 std::vector<gen_reading> reader(const std::string &file_name) {
+    /**
+     * Read fastq-file and save results.
+     */
     std::ifstream file(file_name);
     if (!file.is_open()) {
         std::cout << "Cannot open file." << std::endl;
@@ -41,6 +47,9 @@ std::vector<gen_reading> reader(const std::string &file_name) {
 }
 
 void print_stats(const std::vector<gen_reading> &gens) {
+    /**
+     * Calculating some statistics: total quantity, minimum length, maximum length, average length.
+     */
     int max = 0;
     long long cnt = 0;
     long long sum = 0;
@@ -58,6 +67,9 @@ void print_stats(const std::vector<gen_reading> &gens) {
 }
 
 double gc_stat(const std::vector<gen_reading> &gens) {
+    /**
+     * Calculate GC-content.
+     */
     long long count = 0;
     long long sum = 0;
     for (auto &gen: gens) {
@@ -70,6 +82,9 @@ double gc_stat(const std::vector<gen_reading> &gens) {
 }
 
 double average_quality_at_position(const std::vector<gen_reading> &gens, int pos) {
+    /**
+     * Calculate average quality at position {pos}.
+     */
     long long cnt = 0;
     long long sum = 0;
     for (auto &gen: gens) {
@@ -81,6 +96,9 @@ double average_quality_at_position(const std::vector<gen_reading> &gens, int pos
 }
 
 std::vector<gen_reading> trimming(const std::vector<gen_reading> &gens, int len, int q) {
+    /**
+     * Trimming with a sliding window {len} and quality {q}.
+     */
     std::vector<gen_reading> res;
     int over_quality = len * q;
     for (auto gen: gens) {
@@ -115,6 +133,9 @@ std::vector<gen_reading> trimming(const std::vector<gen_reading> &gens, int len,
 }
 
 std::vector<gen_reading> trimming(const std::vector<gen_reading> &gens, int len) {
+    /**
+     * Trimming by length {len}.
+     */
     std::vector<gen_reading> res;
     for (auto &gen: gens) {
         if (gen.length >= len)
@@ -124,6 +145,9 @@ std::vector<gen_reading> trimming(const std::vector<gen_reading> &gens, int len)
 }
 
 int main() {
+    /**
+     * Code for calculate some usefull informwtion about reading of gen.
+     */
     std::vector<gen_reading> gens = reader("reads.fastq");
     print_stats(gens);
     gc_stat(gens);
